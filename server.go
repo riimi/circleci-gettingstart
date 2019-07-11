@@ -7,8 +7,10 @@ import (
 
 func main() {
 	e := echo.New()
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "hello world!")
-	})
+	e.GET("/", HelloHandler)
 	e.Logger.Fatal(e.Start(":1323"))
+}
+
+func HelloHandler(c echo.Context) error {
+	return c.String(http.StatusOK, "hello world!")
 }
