@@ -37,11 +37,18 @@ jobs:
     executor:
       name: google-cloud
     steps:
-      - run: ls -al
+      - run: |
+        ls -al
+        echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+        gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+        gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+
 workflows:
   pull-request:
     jobs:
       - build
       - deploy-gcp
+        requires:
+          - build
 
 
