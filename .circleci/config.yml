@@ -47,7 +47,7 @@ workflows:
   pull-request:
     jobs:
       - build
-      - deploy-gcp
+      - deploy-gcp:
           requires:
             - build
 
