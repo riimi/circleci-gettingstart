@@ -5,50 +5,61 @@ version: 2.1
 executors:
   default:
     docker:
-      # specify the version
       - image: circleci/golang:1.12
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
-
-      #### TEMPLATE_NOTE: go expects specific checkout path representing url
-      #### expecting it in the form of
-      ####   /go/src/github.com/circleci/go-tool
-      ####   /go/src/bitbucket.org/circleci/go-tool
-    working_directory: /go/src/github.com/riimi/circleci-gettingstart
-  google-cloud:
-    docker:
-      - image: google/cloud-sdk
-    working_directory: /go/src/github.com/riimi/circleci-gettingstart
+      working_directory: /workspace
+      environment:
+        GOPATH: /
+        GOCACHE: /.cache/go-build
+        GO111MODULE: "on"
 
 jobs:
-  build:
+  setup-build:
     executor:
       name: default
     steps:
+      - run: go env
       - checkout
-      # specify any bash command here prefixed with `run: `
-      - run: go get -v -t -d ./...
-      - run: go test -v ./...
-      - run: go build -o app
-  deploy-gcp:
+      - restore_cache:
+          keys:
+            - go-module-cache-v1-{{ checksum "/workspace/go.sum" }}
+            - go-module-cache-v1-
+      - run: go mod download
+      - save_cache:
+          key: go-module-cache-v1-{{ checksum "/workspace/go.sum" }}
+          paths:
+            - /pkg/mod/cache
+      - save_cache:
+          key: worksapce-v1-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - /workspace
+  test:
     executor:
-      name: google-cloud
+      name: default
     steps:
-      - run: |
-          ls -al
-          echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
-          gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
-          gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+      - restore_cache:
+          keys:
+            - workspace-v1-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          keys:
+            - go-module-cache-v1-{{ checksum "/workspace/go.sum" }}
+            - go-module-cache-v1-
+      - restore_cache:
+          keys:
+            - go-build-cache-v1-{{ .Branch }}-{{ .Revision }}
+            - go-build-cache-v1-{{ .Branch }}
+            - go-build-cache-v1
+      - run: go test -v ./...
+      - save_cache:
+          key: go-build-cache-v1-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - /.cache/go-build
 
 workflows:
-  pull-request:
+  test:
     jobs:
-      - build
-      - deploy-gcp:
+      - setup-build
+      - test:
           requires:
-            - build
+            - setup-build
 
 
