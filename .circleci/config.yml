@@ -6,11 +6,11 @@ executors:
   default:
     docker:
       - image: circleci/golang:1.12
-      working_directory: /workspace
-      environment:
-        GOPATH: /
-        GOCACHE: /.cache/go-build
-        GO111MODULE: "on"
+    working_directory: /workspace
+    environment:
+      GOPATH: /
+      GOCACHE: /.cache/go-build
+      GO111MODULE: "on"
 
 jobs:
   setup-build:
