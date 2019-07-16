@@ -11,5 +11,5 @@ func TestHelloHandler(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 	handler(rec, req)
-	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, http.StatusAccepted, rec.Code)
 }
